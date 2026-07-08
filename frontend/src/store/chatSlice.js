@@ -17,7 +17,7 @@ export const sendMessage = createAsyncThunk(
         dispatch(upsertInteractionLocal(data.interaction));
         // Also do a full server re-fetch so the list is always in sync
         // (covers cases where the hcp_id changed via AI extraction).
-        dispatch(fetchInteractions(data.interaction.hcp_id || payload.hcp_id || null));
+        dispatch(fetchInteractions(null));
       } else {
         // For edit / other tool calls, update the local entry.
         dispatch(upsertInteractionLocal(data.interaction));

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { editInteraction, removeInteraction } from "../store/interactionsSlice";
+import { editInteraction, removeInteraction, fetchAllDoctors } from "../store/interactionsSlice";
 
 const sentimentColor = (s) => {
   if (s === "Positive") return "var(--color-positive)";
@@ -9,7 +9,7 @@ const sentimentColor = (s) => {
 };
 
 export default function InteractionList({ items, hcp, onEdit, onView }) {
-  const filtered = hcp ? items.filter((i) => i.hcp_id === hcp.id) : items;
+  const filtered = items;
 
   return (
     <div style={styles.card}>
@@ -21,7 +21,7 @@ export default function InteractionList({ items, hcp, onEdit, onView }) {
       <div style={styles.list}>
         {filtered.length === 0 && (
           <div style={styles.empty}>
-            {hcp ? `No interactions logged yet for ${hcp.name}.` : "No interactions have been logged yet."}
+            No interactions have been logged yet.
           </div>
         )}
         {filtered.map((item) => (
@@ -41,7 +41,9 @@ function InteractionCard({ item, onEdit, onView }) {
   });
 
   const save = () => {
-    dispatch(editInteraction({ id: item.id, payload: draft }));
+    dispatch(editInteraction({ id: item.id, payload: draft })).then(() => {
+      dispatch(fetchAllDoctors());
+    });
     setEditing(false);
   };
 
@@ -96,7 +98,9 @@ function InteractionCard({ item, onEdit, onView }) {
             <button style={styles.linkBtn} onClick={() => onView && onView(item)}>View</button>
             <button
               style={{ ...styles.linkBtn, color: "var(--color-negative)" }}
-              onClick={() => dispatch(removeInteraction(item.id))}
+              onClick={() => dispatch(removeInteraction(item.id)).then(() => {
+                dispatch(fetchAllDoctors());
+              })}
             >
               Delete
             </button>

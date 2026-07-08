@@ -51,7 +51,8 @@ export default function LogInteractionScreen({ hcp, onHcpSelected }) {
   const pendingExtractRef = useRef(null);
 
   useEffect(() => {
-    dispatch(fetchInteractions(hcp?.id || null));
+    // Always fetch all interactions so history list always shows all logged items.
+    dispatch(fetchInteractions(null));
     if (pendingExtractRef.current) {
       // Apply the AI-extracted data that was queued just before the hcp changed.
       const { extractedForm, extractedKeys } = pendingExtractRef.current;
@@ -118,7 +119,7 @@ export default function LogInteractionScreen({ hcp, onHcpSelected }) {
             onClick={() => {
               setMode("form");
               setEditingId(null);
-              setForm(getInitialFormState());
+              // Do not wipe form so what is filled or converted is kept
             }}
           >
             📋 Structured Form

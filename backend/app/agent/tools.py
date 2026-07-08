@@ -126,6 +126,7 @@ def log_interaction(
     raw_notes: str,
     rep_name: str = "Field Rep",
     source: str = "chat",
+    commit: bool = True,
 ) -> Dict[str, Any]:
     """Tool 1: Create a new interaction record from free text using the LLM
     for summarization + entity extraction."""
@@ -224,9 +225,10 @@ def log_interaction(
         created_at=datetime.datetime.utcnow(),
         updated_at=datetime.datetime.utcnow(),
     )
-    db.add(interaction)
-    db.commit()
-    db.refresh(interaction)
+    if commit:
+        db.add(interaction)
+        db.commit()
+        db.refresh(interaction)
     return {"interaction": interaction, "extracted": extracted}
 
 

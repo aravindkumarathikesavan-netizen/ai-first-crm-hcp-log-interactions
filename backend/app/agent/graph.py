@@ -106,6 +106,7 @@ def make_node_log_interaction(db: Session):
             hcp_name=state.get("hcp_name") or "Unknown HCP",
             raw_notes=state["message"],
             source="chat",
+            commit=False,
         )
         state.setdefault("tool_calls", []).append("log_interaction")
         state["result"] = result
@@ -115,9 +116,9 @@ def make_node_log_interaction(db: Session):
         sentiment = extracted.get("sentiment", "")
         sentiment_note = f" Sentiment: {sentiment}." if sentiment else ""
         state["reply"] = (
-            f"✅ Got it! I've logged your {itype.lower()} with {hcp_label} and saved it to the database.{sentiment_note} "
+            f"✅ Got it! I've analyzed your notes and extracted the details for a {itype.lower()} with {hcp_label}. "
             f"The Structured Form has been pre-filled with all extracted details — "
-            f"switch over to review, edit if needed, and click 'Log Interaction' to update the record."
+            f"please review, edit if needed, and click the 'Log Interaction' button to save the record."
         )
         return state
     return _node

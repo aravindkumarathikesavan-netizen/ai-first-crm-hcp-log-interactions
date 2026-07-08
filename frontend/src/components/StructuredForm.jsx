@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { submitStructuredInteraction, fetchInteractions, editInteraction } from "../store/interactionsSlice";
+import { submitStructuredInteraction, fetchInteractions, editInteraction, fetchAllDoctors } from "../store/interactionsSlice";
 
 const getInitialFormState = () => {
   const today = new Date();
@@ -129,7 +129,8 @@ export default function StructuredForm({
         setForm(getInitialFormState());
       }
       // Refresh history panel so newly logged interaction appears immediately.
-      dispatch(fetchInteractions(hcp?.id || null));
+      dispatch(fetchInteractions(null));
+      dispatch(fetchAllDoctors());
       if (setAiExtractedFields) {
         setAiExtractedFields([]);
       }

@@ -1,21 +1,24 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchAllDoctors } from "./store/interactionsSlice";
 import LogInteractionScreen from "./components/LogInteractionScreen";
 
-// Demo HCP roster. In production this comes from the HCP master-data
-// module; here it's a stand-in so the Log Interaction screen has a
-// concrete person to attach interactions to.
-const DEMO_HCPS = [
-  { id: "hcp-001", name: "Dr. Ananya Rao", specialty: "Cardiology", hospital: "St. Luke's Medical Center" },
-  { id: "hcp-002", name: "Dr. Michael Chen", specialty: "Oncology", hospital: "Riverside General" },
-  { id: "hcp-003", name: "Dr. Priya Nair", specialty: "Endocrinology", hospital: "Sunrise Health Clinic" },
-];
-
 export default function App() {
+  const dispatch = useDispatch();
   const [selectedHcp, setSelectedHcp] = useState(null);
+  const doctors = useSelector((state) => state.interactions.doctors || []);
+
+  useEffect(() => {
+    dispatch(fetchAllDoctors());
+  }, [dispatch]);
 
   const handleHcpSelected = (hcpIdOrObj) => {
+    if (!hcpIdOrObj) {
+      setSelectedHcp(null);
+      return;
+    }
     if (typeof hcpIdOrObj === "string") {
-      const h = DEMO_HCPS.find((item) => item.id === hcpIdOrObj);
+      const h = doctors.find((item) => item.id === hcpIdOrObj);
       setSelectedHcp(h || null);
     } else {
       setSelectedHcp(hcpIdOrObj);
@@ -38,16 +41,20 @@ export default function App() {
           <select
             style={styles.select}
             value={selectedHcp ? selectedHcp.id : ""}
-            onChange={(e) =>
-              handleHcpSelected(e.target.value)
-            }
+            onChange={(e) => handleHcpSelected(e.target.value || null)}
           >
-            <option value="">Enter name to search</option>
-            {DEMO_HCPS.map((h) => (
-              <option key={h.id} value={h.id}>
-                {h.name} — {h.specialty}
-              </option>
-            ))}
+            {doctors.length === 0 ? (
+              <option value="" disabled>No doctors logged yet</option>
+            ) : (
+              <>
+                <option value="">— All Interactions —</option>
+                {doctors.map((h) => (
+                  <option key={h.id} value={h.id}>
+                    {h.name}
+                  </option>
+                ))}
+              </>
+            )}
           </select>
         </div>
       </header>
