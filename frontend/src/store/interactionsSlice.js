@@ -103,8 +103,12 @@ const interactionsSlice = createSlice({
       .addCase(fetchAllDoctors.fulfilled, (state, action) => {
         const seen = new Map();
         (action.payload || []).forEach((item) => {
-          if (item.hcp_id && item.hcp_name && !seen.has(item.hcp_id)) {
-            seen.set(item.hcp_id, { id: item.hcp_id, name: item.hcp_name });
+          if (item.hcp_name) {
+            // Use hcp_id if valid, otherwise fallback to hcp_name as unique identifier.
+            const hcpId = (!item.hcp_id || item.hcp_id === "unknown-hcp") ? item.hcp_name : item.hcp_id;
+            if (!seen.has(hcpId)) {
+              seen.set(hcpId, { id: hcpId, name: item.hcp_name });
+            }
           }
         });
         state.doctors = Array.from(seen.values());

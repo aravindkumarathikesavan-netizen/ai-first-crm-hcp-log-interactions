@@ -157,6 +157,12 @@ def log_interaction(
                 break
         else:
             final_hcp_name = extracted_name
+            # Resolve or generate dynamic ID
+            existing = db.query(models.Interaction).filter(models.Interaction.hcp_name == final_hcp_name).first()
+            if existing:
+                final_hcp_id = existing.hcp_id
+            else:
+                final_hcp_id = f"hcp-{models.gen_id()[:8]}"
 
     # Clean up attendees list to use the full resolved name if there is an overlap
     if final_hcp_name and final_hcp_name != "Unknown HCP" and "attendees" in extracted and isinstance(extracted["attendees"], list):

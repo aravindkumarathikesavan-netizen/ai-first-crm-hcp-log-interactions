@@ -9,7 +9,9 @@ const sentimentColor = (s) => {
 };
 
 export default function InteractionList({ items, hcp, onEdit, onView }) {
-  const filtered = items;
+  const filtered = hcp
+    ? items.filter((i) => i.hcp_id === hcp.id || i.hcp_name === hcp.name)
+    : items;
 
   return (
     <div style={styles.card}>
@@ -21,7 +23,7 @@ export default function InteractionList({ items, hcp, onEdit, onView }) {
       <div style={styles.list}>
         {filtered.length === 0 && (
           <div style={styles.empty}>
-            No interactions have been logged yet.
+            {hcp ? `No interactions logged yet for ${hcp.name}.` : "No interactions have been logged yet."}
           </div>
         )}
         {filtered.map((item) => (
