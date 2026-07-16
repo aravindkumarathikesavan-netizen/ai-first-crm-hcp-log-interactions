@@ -85,8 +85,8 @@ def _sanitize_extracted(data: Dict[str, Any]) -> Dict[str, Any]:
     return data
 
 
-def _llm_extract(note: str) -> Dict[str, Any]:
-    llm = get_primary_llm(temperature=0)
+def _llm_extract(note: str, api_key: Optional[str] = None) -> Dict[str, Any]:
+    llm = get_primary_llm(temperature=0, api_key=api_key)
     prompt = EXTRACTION_PROMPT.format(note=note)
     resp = llm.invoke(prompt)
     text = resp.content.strip()
@@ -127,10 +127,11 @@ def log_interaction(
     rep_name: str = "Field Rep",
     source: str = "chat",
     commit: bool = True,
+    api_key: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Tool 1: Create a new interaction record from free text using the LLM
     for summarization + entity extraction."""
-    extracted = _llm_extract(raw_notes)
+    extracted = _llm_extract(raw_notes, api_key=api_key)
 
     final_hcp_id = hcp_id
     final_hcp_name = hcp_name
@@ -265,6 +266,7 @@ def edit_interaction_from_instruction(
     db: Session,
     interaction_id: str,
     instruction: str,
+    api_key: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Convenience wrapper for the chat interface: 'change sentiment to
     positive and add ProductC to products discussed' -> field diff via LLM."""
@@ -274,7 +276,7 @@ def edit_interaction_from_instruction(
     if not interaction:
         return {"error": f"Interaction {interaction_id} not found"}
 
-    llm = get_primary_llm(temperature=0)
+    llm = get_primary_llm(temperature=0, api_key=api_key)
     prompt = f"""Given this existing interaction JSON:
 {json.dumps({
     "interaction_type": interaction.interaction_type,
@@ -311,7 +313,7 @@ def fetch_hcp_history(db: Session, hcp_id: str, limit: int = 5) -> Dict[str, Any
     return {"history": rows, "count": len(rows)}
 
 
-def suggest_next_best_action(db: Session, hcp_id: str) -> Dict[str, Any]:
+def suggest_next_best_action(db: Session, hcp_id: str, api_key: Optional[str] = None) -> Dict[str, Any]:
     """Tool 4: Use the larger context model to reason over an HCP's full
     interaction history and recommend the single best next action for the
     rep to take."""
@@ -324,7 +326,7 @@ def suggest_next_best_action(db: Session, hcp_id: str) -> Dict[str, Any]:
         f"products={i.products_discussed}, notes={i.key_discussion_points}"
         for i in history
     )
-    llm = get_context_llm(temperature=0.3)
+    llm = get_context_llm(temperature=0.3, api_key=api_key)
     prompt = f"""You are a pharma sales strategist. Given this HCP's interaction
 history (most recent first), recommend ONE concise next best action
 (1-2 sentences) for the field rep.

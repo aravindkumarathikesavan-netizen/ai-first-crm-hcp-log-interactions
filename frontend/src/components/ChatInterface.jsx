@@ -15,6 +15,11 @@ export default function ChatInterface({ hcp, interactionId, onExtract, onHcpExtr
   const endRef = useRef(null);
   const textareaRef = useRef(null);
 
+  const [showSettings, setShowSettings] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState(localStorage.getItem("groq_api_key") || "");
+
+  const hasApiKey = !!localStorage.getItem("groq_api_key");
+
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, status]);
@@ -26,6 +31,17 @@ export default function ChatInterface({ hcp, interactionId, onExtract, onHcpExtr
       textareaRef.current.style.height = `${newHeight}px`;
     }
   }, [text]);
+
+  const saveApiKey = (key) => {
+    const trimmed = key.trim();
+    if (trimmed) {
+      localStorage.setItem("groq_api_key", trimmed);
+    } else {
+      localStorage.removeItem("groq_api_key");
+    }
+    setApiKeyInput(trimmed);
+    setShowSettings(false);
+  };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -124,6 +140,53 @@ export default function ChatInterface({ hcp, interactionId, onExtract, onHcpExtr
 
   return (
     <div style={styles.card}>
+      <div style={styles.chatHeader}>
+        <div style={styles.chatHeaderTitle}>🤖 LangGraph AI Agent</div>
+        <button
+          style={{
+            ...styles.settingsToggleBtn,
+            background: hasApiKey ? "var(--color-primary-tint)" : "var(--color-border)",
+            color: hasApiKey ? "var(--color-primary-dark)" : "var(--color-ink-muted)",
+          }}
+          onClick={() => setShowSettings(!showSettings)}
+          title="Configure API Settings"
+        >
+          ⚙️ {hasApiKey ? "Custom Key Configured" : "Set API Key"}
+        </button>
+      </div>
+
+      {showSettings && (
+        <div style={styles.settingsPanel}>
+          <div style={styles.settingsLabel}>Custom Groq API Key (stored locally in browser):</div>
+          <div style={styles.settingsRow}>
+            <input
+              type="password"
+              style={styles.settingsInput}
+              placeholder="gsk_..."
+              value={apiKeyInput}
+              onChange={(e) => setApiKeyInput(e.target.value)}
+            />
+            <button style={styles.saveBtn} onClick={() => saveApiKey(apiKeyInput)}>
+              Save
+            </button>
+            <button style={styles.clearBtn} onClick={() => saveApiKey("")}>
+              Clear
+            </button>
+          </div>
+          <div style={styles.settingsHelp}>
+            No key? Get a free key at{" "}
+            <a
+              href="https://console.groq.com"
+              target="_blank"
+              rel="noreferrer"
+              style={styles.settingsLink}
+            >
+              console.groq.com
+            </a>
+          </div>
+        </div>
+      )}
+
       <div style={styles.log}>
         {messages.length === 0 && (
           <div style={styles.emptyState}>
@@ -197,6 +260,84 @@ const styles = {
     flexDirection: "column",
     height: 520,
   },
+  chatHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "12px 18px",
+    borderBottom: "1px solid var(--color-border)",
+    background: "var(--color-bg)",
+    borderTopLeftRadius: "var(--radius-lg)",
+    borderTopRightRadius: "var(--radius-lg)",
+  },
+  chatHeaderTitle: {
+    fontWeight: 600,
+    fontSize: 14,
+    color: "var(--color-ink)",
+  },
+  settingsToggleBtn: {
+    border: "none",
+    padding: "6px 12px",
+    borderRadius: "var(--radius-sm)",
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: 4,
+    transition: "background 0.2s, color 0.2s",
+  },
+  settingsPanel: {
+    background: "var(--color-surface)",
+    borderBottom: "1px solid var(--color-border)",
+    padding: "14px 18px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+  },
+  settingsLabel: {
+    fontSize: 12.5,
+    fontWeight: 500,
+    color: "var(--color-ink-muted)",
+  },
+  settingsRow: {
+    display: "flex",
+    gap: 8,
+  },
+  settingsInput: {
+    flex: 1,
+    padding: "8px 12px",
+    borderRadius: "var(--radius-sm)",
+    border: "1px solid var(--color-border)",
+    fontSize: 13,
+  },
+  saveBtn: {
+    padding: "8px 16px",
+    borderRadius: "var(--radius-sm)",
+    border: "none",
+    background: "var(--color-primary)",
+    color: "#fff",
+    fontWeight: 600,
+    fontSize: 13,
+  },
+  clearBtn: {
+    padding: "8px 16px",
+    borderRadius: "var(--radius-sm)",
+    border: "1px solid var(--color-border)",
+    background: "var(--color-surface)",
+    color: "var(--color-ink-muted)",
+    fontWeight: 600,
+    fontSize: 13,
+  },
+  settingsHelp: {
+    fontSize: 11.5,
+    color: "var(--color-ink-muted)",
+  },
+  settingsLink: {
+    color: "var(--color-primary)",
+    textDecoration: "underline",
+    fontWeight: 500,
+  },
   log: { flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 10 },
   emptyState: { margin: "auto", textAlign: "center", maxWidth: 380 },
   emptyTitle: { fontWeight: 600, fontSize: 15, marginBottom: 6 },
@@ -229,6 +370,7 @@ const styles = {
     maxWidth: "78%",
     fontSize: 14,
     lineHeight: 1.45,
+    whiteSpace: "pre-line",
   },
   toolTag: {
     marginTop: 6,

@@ -85,10 +85,11 @@ class AgentState(TypedDict, total=False):
     tool_calls: List[str]
     reply: str
     result: Dict[str, Any]
+    groq_api_key: Optional[str]
 
 
 def classify_intent(state: AgentState) -> AgentState:
-    llm = get_primary_llm(temperature=0)
+    llm = get_primary_llm(temperature=0, api_key=state.get("groq_api_key"))
     prompt = CLASSIFY_PROMPT.format(message=state["message"])
     resp = llm.invoke(prompt)
     intent = resp.content.strip().lower().replace(" ", "_")
@@ -107,6 +108,7 @@ def make_node_log_interaction(db: Session):
             raw_notes=state["message"],
             source="chat",
             commit=False,
+            api_key=state.get("groq_api_key"),
         )
         state.setdefault("tool_calls", []).append("log_interaction")
         state["result"] = result
@@ -134,7 +136,10 @@ def make_node_edit_interaction(db: Session):
             )
             return state
         result = tools.edit_interaction_from_instruction(
-            db=db, interaction_id=interaction_id, instruction=state["message"]
+            db=db,
+            interaction_id=interaction_id,
+            instruction=state["message"],
+            api_key=state.get("groq_api_key"),
         )
         state.setdefault("tool_calls", []).append("edit_interaction")
         state["result"] = result
@@ -156,7 +161,11 @@ def make_node_fetch_history(db: Session):
 
 def make_node_suggest_action(db: Session):
     def _node(state: AgentState) -> AgentState:
-        result = tools.suggest_next_best_action(db=db, hcp_id=state.get("hcp_id") or "")
+        result = tools.suggest_next_best_action(
+            db=db,
+            hcp_id=state.get("hcp_id") or "",
+            api_key=state.get("groq_api_key"),
+        )
         state.setdefault("tool_calls", []).append("suggest_next_best_action")
         state["result"] = result
         state["reply"] = result["suggestion"]
@@ -230,7 +239,8 @@ def build_agent_graph(db: Session):
 
 def run_agent(db: Session, session_id: str, message: str,
               hcp_id: Optional[str] = None, hcp_name: Optional[str] = None,
-              interaction_id: Optional[str] = None) -> AgentState:
+              interaction_id: Optional[str] = None,
+              groq_api_key: Optional[str] = None) -> AgentState:
     app = build_agent_graph(db)
     initial_state: AgentState = {
         "session_id": session_id,
@@ -239,6 +249,7 @@ def run_agent(db: Session, session_id: str, message: str,
         "hcp_name": hcp_name,
         "interaction_id": interaction_id,
         "tool_calls": [],
+        "groq_api_key": groq_api_key,
     }
     final_state = app.invoke(initial_state)
     return final_state
